@@ -3,7 +3,6 @@
  */
 class ApiError extends Error {
   constructor(statusCode, message) {
-    // Gọi tới hàm khởi tạo của class Error (class cha) để còn dùng this
     // Thằng cha (Error) có property message rồi nên gọi nó luôn trong super
     super(message)
 

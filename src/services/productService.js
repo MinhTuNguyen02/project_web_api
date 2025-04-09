@@ -24,7 +24,17 @@ const createNew = async (reqBody) => {
   }
 }
 
+const getAll = async (categoryId) => {
+  try {
+    const products = await productModel.getAll(categoryId)
+    return products
+  } catch (error) {
+    throw error
+  }
+}
+
 
 export const productService = {
-  createNew
+  createNew,
+  getAll
 }

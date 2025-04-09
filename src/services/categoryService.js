@@ -1,6 +1,5 @@
 /* eslint-disable no-useless-catch */
 import { categoryModel } from '~/models/categoryModel'
-import { warehouseModel } from '~/models/warehouseModel'
 
 const createNew = async (reqBody) => {
   try {
@@ -14,19 +13,22 @@ const createNew = async (reqBody) => {
     //Lấy bản ghi sau khi gọi
     const getNewCategory = await categoryModel.findOneById(createdCategory.insertedId)
 
-    if (getNewCategory) {
-      getNewCategory.products = []
-
-      await warehouseModel.pushListCategories(getNewCategory)
-    }
-
     return getNewCategory
   } catch (error) {
     throw error
   }
 }
 
+const getAll = async () => {
+  try {
+    const categories = await categoryModel.getAll()
+    return categories
+  } catch (error) {
+    throw error
+  }
+}
 
 export const categoryService = {
-  createNew
+  createNew,
+  getAll
 }

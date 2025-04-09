@@ -11,7 +11,16 @@ const createNew = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getAll = async (req, res, next) => {
+  try {
+    const { categoryId } = req.query
+    const products = await productService.getAll(categoryId)
+    res.status(StatusCodes.OK).json(products)
+  } catch (error) { next(error) }
+}
+
 
 export const productController = {
-  createNew
+  createNew,
+  getAll
 }

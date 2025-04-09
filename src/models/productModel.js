@@ -6,7 +6,6 @@ import { ObjectId } from 'mongodb'
 //define collection
 const PRODUCT_COLLECTION_NAME = 'products'
 const PRODUCT_COLLECTION_SCHEMA = Joi.object({
-  warehouseId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
   categoryId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
   productName: Joi.string().required().min(3).max(100).trim().strict(),
   description: Joi.string().optional(),
@@ -28,7 +27,6 @@ const createNew = async (data) => {
     const validData = await validateBeforeCreate(data)
     const newProductToAdd = {
       ...validData,
-      warehouseId: new ObjectId(validData.warehouseId),
       categoryId: new ObjectId(validData.categoryId)
     }
     const createdProduct = await GET_DB().collection(PRODUCT_COLLECTION_NAME).insertOne(newProductToAdd)
@@ -49,9 +47,20 @@ const findOneById = async (id) => {
   }
 }
 
+const getAll = async (categoryId) => {
+  try {
+    const query = categoryId ? { categoryId: new ObjectId(categoryId) } : {}
+    const products = await GET_DB().collection('products').find(query).toArray()
+    return products
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const productModel = {
   PRODUCT_COLLECTION_NAME,
   PRODUCT_COLLECTION_SCHEMA,
   createNew,
-  findOneById
+  findOneById,
+  getAll
 }

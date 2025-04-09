@@ -10,8 +10,15 @@ const createNew = async (req, res, next) => {
     res.status(StatusCodes.CREATED).json(createdCategory)
   } catch (error) { next(error) }
 }
+const getAll = async (req, res, next) => {
+  try {
+    const categories = await categoryService.getAll()
+    res.status(StatusCodes.OK).json(categories)
+  } catch (error) { next(error) }
+}
 
 
 export const categoryController = {
-  createNew
+  createNew,
+  getAll
 }
