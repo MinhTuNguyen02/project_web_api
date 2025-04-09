@@ -34,14 +34,14 @@ const START_SERVER = () => {
   })
 }
 
-//Connect database before run server
+//kết nối database trước khi chạy server
 (async () => {
   try {
     console.log('Connecting to Mongo Cloud Atlas')
     await CONNECT_DB()
     console.log('Connected to Mongo Cloud Atlas')
 
-    //Start run server
+    //Chạy server
     START_SERVER()
   } catch (error) {
     console.error(error)
