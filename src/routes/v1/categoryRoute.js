@@ -7,7 +7,7 @@ Router.route('/')
   .get(categoryController.getAll)
   .post(categoryValidation.createNew, categoryController.createNew)
 
-// Router.route('/:id')
-//   .get(categoryController.getDetails)
-//   .put()
+Router.route('/:id')
+  .put(categoryValidation.update, categoryController.update)
+
 export const categoryRoute = Router

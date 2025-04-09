@@ -17,8 +17,21 @@ const getAll = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const update = async (req, res, next) => {
+  try {
+    const categoryId = req.params.id
+    const updatedCategory = await categoryService.update(categoryId, req.body)
+    res.status(StatusCodes.OK).json(updatedCategory)
+  } catch (error) {
+    if (error.message === 'Category not found' || error.message === 'Invalid category ID') {
+      return res.status(StatusCodes.NOT_FOUND).json({ message: error.message })
+    }
+    next(error)
+  }
+}
 
 export const categoryController = {
   createNew,
-  getAll
+  getAll,
+  update
 }

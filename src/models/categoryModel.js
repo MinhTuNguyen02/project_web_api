@@ -7,7 +7,7 @@ import { ObjectId } from 'mongodb'
 const CATEGORY_COLLECTION_NAME = 'categories'
 const CATEGORY_COLLECTION_SCHEMA = Joi.object({
   categoryName: Joi.string().required().min(3).max(50).trim().strict(),
-  description: Joi.string().required().min(0).max(100).trim().strict(),
+  description: Joi.string().optional().allow(''),
 
   createAt: Joi.date().timestamp('javascript').default(Date.now),
   updateAt: Joi.date().timestamp('javascript').default(null),
@@ -52,11 +52,28 @@ const getAll = async () => {
   }
 }
 
+const update = async (categoryId, data) => {
+  try {
+    const validData = await validateBeforeCreate(data)
+
+    const result = await GET_DB().collection(CATEGORY_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(categoryId) },
+      { $set: { ...validData, updateAt: Date.now() } },
+      { returnDocument: 'after' }
+    )
+
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 
 export const categoryModel = {
   CATEGORY_COLLECTION_NAME,
   CATEGORY_COLLECTION_SCHEMA,
   createNew,
   findOneById,
-  getAll
+  getAll,
+  update
 }

@@ -28,7 +28,18 @@ const getAll = async () => {
   }
 }
 
+const update = async (categoryId, reqBody) => {
+  try {
+    const updatedData = { ...reqBody }
+    const updatedCategory = await categoryModel.update(categoryId, updatedData)
+    return updatedCategory
+  } catch (error) {
+    throw error
+  }
+}
+
 export const categoryService = {
   createNew,
-  getAll
+  getAll,
+  update
 }
