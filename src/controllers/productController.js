@@ -19,8 +19,21 @@ const getAll = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const update = async (req, res, next) => {
+  try {
+    const productId = req.params.id
+    const updatedProduct = await productService.update(productId, req.body)
+    res.status(StatusCodes.OK).json(updatedProduct)
+  } catch (error) {
+    if (error.message === 'Product not found' || error.message === 'Invalid product ID') {
+      return res.status(StatusCodes.NOT_FOUND).json({ message: error.message })
+    }
+    next(error)
+  }
+}
 
 export const productController = {
   createNew,
-  getAll
+  getAll,
+  update
 }

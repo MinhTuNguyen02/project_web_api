@@ -1,6 +1,5 @@
 /* eslint-disable no-useless-catch */
 import { productModel } from '~/models/productModel'
-import { categoryModel } from '~/models/categoryModel'
 
 const createNew = async (reqBody) => {
   try {
@@ -13,10 +12,6 @@ const createNew = async (reqBody) => {
 
     //Lấy bản ghi sau khi gọi
     const getNewProduct = await productModel.findOneById(createdProduct.insertedId)
-
-    if (getNewProduct) {
-      await categoryModel.pushListProducts(getNewProduct)
-    }
 
     return getNewProduct
   } catch (error) {
@@ -33,8 +28,19 @@ const getAll = async (categoryId) => {
   }
 }
 
+const update = async (productId, reqBody) => {
+  try {
+    const updatedData = { ...reqBody }
+    const updatedProduct = await productModel.update(productId, updatedData)
+    return updatedProduct
+  } catch (error) {
+    throw error
+  }
+}
+
 
 export const productService = {
   createNew,
-  getAll
+  getAll,
+  update
 }

@@ -8,10 +8,10 @@ const PRODUCT_COLLECTION_NAME = 'products'
 const PRODUCT_COLLECTION_SCHEMA = Joi.object({
   categoryId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
   productName: Joi.string().required().min(3).max(100).trim().strict(),
-  description: Joi.string().optional(),
+  description: Joi.string().optional().allow(''),
   price: Joi.number().required().min(0),
   img: Joi.array().items(Joi.string()).default([]),
-  inventory: Joi.number().min(0),
+  inventory: Joi.number().min(0).default(0),
 
   createAt: Joi.date().timestamp('javascript').default(Date.now),
   updateAt: Joi.date().timestamp('javascript').default(null),
@@ -24,7 +24,8 @@ const validateBeforeCreate = async (data) => {
 
 const createNew = async (data) => {
   try {
-    const validData = await validateBeforeCreate(data)
+    const { quantity, ...rest } = data // Tách quantity ra
+    const validData = await validateBeforeCreate({ ...rest, inventory: quantity })
     const newProductToAdd = {
       ...validData,
       categoryId: new ObjectId(validData.categoryId)
@@ -57,10 +58,37 @@ const getAll = async (categoryId) => {
   }
 }
 
+const update = async (productId, data) => {
+  try {
+    const { quantity, ...rest } = data
+    const existingProduct = await findOneById(productId)
+    if (!existingProduct) {
+      throw new Error('Product not found')
+    }
+    const newInventory = existingProduct.inventory + (quantity || 0) // Cộng quantity vào inventory
+    const updateData = {
+      ...rest,
+      categoryId: new ObjectId(existingProduct.categoryId),
+      inventory: newInventory,
+      updateAt: Date.now()
+    }
+    const result = await GET_DB().collection(PRODUCT_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(productId) },
+      { $set: updateData },
+      { returnDocument: 'after' }
+    )
+
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
 export const productModel = {
   PRODUCT_COLLECTION_NAME,
   PRODUCT_COLLECTION_SCHEMA,
   createNew,
   findOneById,
-  getAll
+  getAll,
+  update
 }

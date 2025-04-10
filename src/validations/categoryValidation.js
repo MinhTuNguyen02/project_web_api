@@ -4,7 +4,7 @@ import ApiError from '~/utils/ApiError'
 
 const createNew = async (req, res, next) => {
   const correctCondition = Joi.object({
-    categoryName: Joi.string().required().min(3).max(50).trim().strict().messages({
+    categoryName: Joi.string().required().min(2).max(50).trim().strict().messages({
       'any.required': 'Tên danh mục là bắt buộc',
       'string.empty': 'Tên danh mục không được để trống!',
       'string.min': 'Tên danh mục phải dài ít nhất 3 ký tự!',
@@ -24,7 +24,7 @@ const createNew = async (req, res, next) => {
 
 const update = async (req, res, next) => {
   const correctCondition = Joi.object({
-    categoryName: Joi.string().required().min(3).max(50).trim().strict().messages({
+    categoryName: Joi.string().required().min(2).max(50).trim().strict().messages({
       'any.required': 'Tên danh mục là bắt buộc',
       'string.empty': 'Tên danh mục không được để trống!',
       'string.min': 'Tên danh mục phải dài ít nhất 3 ký tự!',
