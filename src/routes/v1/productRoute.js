@@ -8,6 +8,8 @@ Router.route('/')
   .post(productValidation.createNew, productController.createNew)
 
 Router.route('/:id')
-  .put(productValidation.createNew, productController.update)
+  .get(productController.getById)
+  .put(productValidation.update, productController.update)
+  .delete(productController.deleteItem)
 
 export const productRoute = Router

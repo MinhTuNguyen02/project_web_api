@@ -24,8 +24,7 @@ const validateBeforeCreate = async (data) => {
 
 const createNew = async (data) => {
   try {
-    const { quantity, ...rest } = data // Tách quantity ra
-    const validData = await validateBeforeCreate({ ...rest, inventory: quantity })
+    const validData = await validateBeforeCreate(data)
     const newProductToAdd = {
       ...validData,
       categoryId: new ObjectId(validData.categoryId)
@@ -40,7 +39,8 @@ const createNew = async (data) => {
 const findOneById = async (id) => {
   try {
     const result = await GET_DB().collection(PRODUCT_COLLECTION_NAME).findOne({
-      _id: new ObjectId(id)
+      _id: new ObjectId(id),
+      _destroy: false
     })
     return result
   } catch (error) {
@@ -50,7 +50,7 @@ const findOneById = async (id) => {
 
 const getAll = async (categoryId) => {
   try {
-    const query = categoryId ? { categoryId: new ObjectId(categoryId) } : {}
+    const query = categoryId ? { categoryId: new ObjectId(categoryId), _destroy: false } : { _destroy: false }
     const products = await GET_DB().collection('products').find(query).toArray()
     return products
   } catch (error) {
@@ -60,24 +60,30 @@ const getAll = async (categoryId) => {
 
 const update = async (productId, data) => {
   try {
-    const { quantity, ...rest } = data
-    const existingProduct = await findOneById(productId)
-    if (!existingProduct) {
-      throw new Error('Product not found')
-    }
-    const newInventory = existingProduct.inventory + (quantity || 0) // Cộng quantity vào inventory
-    const updateData = {
-      ...rest,
-      categoryId: new ObjectId(existingProduct.categoryId),
-      inventory: newInventory,
-      updateAt: Date.now()
-    }
+    const validData = await validateBeforeCreate(data)
+
     const result = await GET_DB().collection(PRODUCT_COLLECTION_NAME).findOneAndUpdate(
       { _id: new ObjectId(productId) },
-      { $set: updateData },
+      { $set: { ...validData, categoryId: new ObjectId(validData.categoryId) } },
       { returnDocument: 'after' }
     )
 
+    return result
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const deleteItem = async (id) => {
+  try {
+    const result = await GET_DB().collection(PRODUCT_COLLECTION_NAME).findOneAndUpdate(
+      { _id: new ObjectId(id), _destroy: false },
+      { $set: { _destroy: true, updateAt: Date.now() } },
+      { returnDocument: 'after' }
+    )
+    if (!result) {
+      throw new Error('Product not found or already deleted')
+    }
     return result
   } catch (error) {
     throw new Error(error)
@@ -90,5 +96,6 @@ export const productModel = {
   createNew,
   findOneById,
   getAll,
-  update
+  update,
+  deleteItem
 }

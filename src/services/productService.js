@@ -3,8 +3,10 @@ import { productModel } from '~/models/productModel'
 
 const createNew = async (reqBody) => {
   try {
+    const { quantity, ...rest } = reqBody // Tách quantity ra
     const newProduct = {
-      ...reqBody
+      ...rest,
+      inventory: quantity
     }
 
     //Gọi đến tầng Model để xử lý, lưu dữ liệu vào database
@@ -28,11 +30,42 @@ const getAll = async (categoryId) => {
   }
 }
 
+const getById = async (id) => {
+  try {
+    const product = await productModel.findOneById(id)
+    if (!product) {
+      throw new Error('Product not found')
+    }
+    return product
+  } catch (error) {
+    throw error
+  }
+}
+
 const update = async (productId, reqBody) => {
   try {
-    const updatedData = { ...reqBody }
-    const updatedProduct = await productModel.update(productId, updatedData)
+    const { quantity, ...rest } = reqBody
+    const existingProduct = await productModel.findOneById(productId)
+    if (!existingProduct) {
+      throw new Error('Product not found')
+    }
+    const newInventory = existingProduct.inventory + (quantity || 0) // Cộng quantity vào inventory
+    const updateData = {
+      ...rest,
+      inventory: newInventory,
+      updateAt: Date.now()
+    }
+    const updatedProduct = await productModel.update(productId, updateData)
     return updatedProduct
+  } catch (error) {
+    throw error
+  }
+}
+
+const deleteItem = async (id) => {
+  try {
+    const deletedProduct = await productModel.deleteItem(id)
+    return deletedProduct
   } catch (error) {
     throw error
   }
@@ -42,5 +75,7 @@ const update = async (productId, reqBody) => {
 export const productService = {
   createNew,
   getAll,
-  update
+  getById,
+  update,
+  deleteItem
 }

@@ -19,6 +19,16 @@ const getAll = async (req, res, next) => {
   } catch (error) { next(error) }
 }
 
+const getById = async (req, res, next) => {
+  try {
+    const productId = req.params.id
+    const product = await productService.getById(productId)
+    res.status(StatusCodes.OK).json(product)
+  } catch (error) {
+    next(error)
+  }
+}
+
 const update = async (req, res, next) => {
   try {
     const productId = req.params.id
@@ -32,8 +42,20 @@ const update = async (req, res, next) => {
   }
 }
 
+const deleteItem = async (req, res, next) => {
+  try {
+    const productId = req.params.id
+    const deletedProduct = await productService.deleteItem(productId)
+    res.status(StatusCodes.OK).json(deletedProduct)
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const productController = {
   createNew,
   getAll,
-  update
+  getById,
+  update,
+  deleteItem
 }
