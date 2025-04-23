@@ -21,9 +21,9 @@ const createNew = async (reqBody) => {
   }
 }
 
-const getAll = async (categoryId) => {
+const getAll = async (categoryId, name) => {
   try {
-    const products = await productModel.getAll(categoryId)
+    const products = await productModel.getAll(categoryId, name)
     return products
   } catch (error) {
     throw error

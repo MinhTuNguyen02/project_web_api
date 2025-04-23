@@ -13,8 +13,8 @@ const createNew = async (req, res, next) => {
 
 const getAll = async (req, res, next) => {
   try {
-    const { categoryId } = req.query
-    const products = await productService.getAll(categoryId)
+    const { categoryId, name } = req.query
+    const products = await productService.getAll(categoryId, name)
     res.status(StatusCodes.OK).json(products)
   } catch (error) { next(error) }
 }

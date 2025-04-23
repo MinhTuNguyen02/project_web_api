@@ -48,10 +48,12 @@ const findOneById = async (id) => {
   }
 }
 
-const getAll = async (categoryId) => {
+const getAll = async (categoryId, name) => {
   try {
-    const query = categoryId ? { categoryId: new ObjectId(categoryId), _destroy: false } : { _destroy: false }
-    const products = await GET_DB().collection('products').find(query).toArray()
+    const query = { _destroy: false }
+    if (categoryId) query.categoryId = new ObjectId(categoryId)
+    if (name) query.productName = { $regex: name, $options: 'i' } // Tìm kiếm case-insensitive
+    const products = await GET_DB().collection(PRODUCT_COLLECTION_NAME).find(query).toArray()
     return products
   } catch (error) {
     throw new Error(error)
