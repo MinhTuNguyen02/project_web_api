@@ -1,5 +1,6 @@
 import { StatusCodes } from 'http-status-codes'
 import { orderService } from '~/services/orderService'
+import { env } from '~/config/environment'
 
 const createOrder = async (req, res) => {
   try {
@@ -10,11 +11,37 @@ const createOrder = async (req, res) => {
         statusCode: 400
       })
     }
+
+    // Tính phí vận chuyển dựa trên khu vực
+    let shippingFee = 0
+    const { shippingMethod = 'standard', address } = shippingInfo
+
+    const getCityFromAddress = (address) => {
+      return env.CITIES.find(city => address.toLowerCase().includes(city.toLowerCase())) || 'default'
+    }
+
+    const city = getCityFromAddress(address)
+    const { baseFee, distance, rate } = env.SHIPPING_RATES[city]
+    shippingFee = baseFee + distance * rate
+    if (shippingMethod === 'express') {
+      shippingFee *= 1.5
+    }
+
+    // Kiểm tra total (items total + shippingFee)
+    const itemsTotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    if (Math.abs(total - (itemsTotal + shippingFee)) > 1) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: 'Tổng tiền không khớp với đơn hàng và phí vận chuyển',
+        statusCode: 400
+      })
+    }
+
     const order = await orderService.createOrder({
       userId,
       items,
       shippingInfo,
       paymentMethod,
+      shippingFee,
       total
     })
     res.status(StatusCodes.CREATED).json({ order, message: 'Đơn hàng tạo thành công' })

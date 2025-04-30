@@ -7,6 +7,8 @@ import { cartRoute } from './cartRoute'
 import { wishlistRoute } from './wishListRoute'
 import { addressRoute } from './addressRoute'
 import { orderRoute } from './orderRoute'
+import { newsRoute } from './newsRoute'
+import { messageRoute } from './messageRoute'
 
 const Router = express.Router()
 
@@ -21,5 +23,7 @@ Router.use('/cart', cartRoute)
 Router.use('/wishlist', wishlistRoute)
 Router.use('/addresses', addressRoute)
 Router.use('/orders', orderRoute)
+Router.use('/news', newsRoute)
+Router.use('/messages', messageRoute)
 
 export const APIs_V1 = Router

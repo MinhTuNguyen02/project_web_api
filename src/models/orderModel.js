@@ -22,9 +22,11 @@ const ORDER_COLLECTION_SCHEMA = Joi.object({
     email: Joi.string().email().required().trim(),
     phone: Joi.string().pattern(/^\d{10}$/).required().trim(),
     address: Joi.string().required().trim(),
-    note: Joi.string().optional().allow('').trim()
+    note: Joi.string().optional().allow('').trim(),
+    shippingMethod: Joi.string().valid('standard', 'express').default('standard')
   }).required(),
   paymentMethod: Joi.string().valid('cod', 'bank').required(),
+  shippingFee: Joi.number().min(0).required(),
   total: Joi.number().min(0).required(),
   status: Joi.string().valid('Đang chờ xử lý', 'Đang xử lý', 'Đang giao hàng', 'Đã nhận hàng', 'Đã hủy').default('Đang chờ xử lý'),
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
@@ -47,7 +49,7 @@ const createOrder = async (data) => {
         // Kiểm tra inventory
         for (const item of validData.items) {
           const product = await db.collection(PRODUCT_COLLECTION_NAME).findOne(
-            { _id: new ObjectId(item.productId) },
+            { _id: new ObjectId(item.productId), _destroy: false },
             { session }
           )
           if (!product) {
@@ -58,11 +60,16 @@ const createOrder = async (data) => {
           }
         }
 
-        // Giảm inventory
+        // Giảm inventory và tăng purchaseCount
         for (const item of validData.items) {
           await db.collection(PRODUCT_COLLECTION_NAME).updateOne(
             { _id: new ObjectId(item.productId) },
-            { $inc: { inventory: -item.quantity } },
+            {
+              $inc: {
+                inventory: -item.quantity,
+                purchaseCount: item.quantity
+              }
+            },
             { session }
           )
         }
@@ -133,6 +140,7 @@ const getOrdersByUserId = async (userId) => {
               }
             },
             shippingInfo: { $first: '$shippingInfo' },
+            shippingFee: { $first: '$shippingFee' },
             paymentMethod: { $first: '$paymentMethod' },
             total: { $first: '$total' },
             status: { $first: '$status' },
@@ -186,6 +194,7 @@ const getAllOrders = async () => {
               }
             },
             shippingInfo: { $first: '$shippingInfo' },
+            shippingFee: { $first: '$shippingFee' },
             paymentMethod: { $first: '$paymentMethod' },
             total: { $first: '$total' },
             status: { $first: '$status' },
@@ -226,7 +235,7 @@ const getOrderById = async (id, userId) => {
         {
           $unwind: {
             path: '$items.product',
-            preserveNullAndEmptyArrays: true // Giữ item nếu không tìm thấy sản phẩm
+            preserveNullAndEmptyArrays: true
           }
         },
         {
@@ -238,7 +247,7 @@ const getOrderById = async (id, userId) => {
                 productId: {
                   $cond: [
                     { $eq: ['$items.product', {}] },
-                    { _id: '$items.productId' }, // Trả về ObjectId nếu không có sản phẩm
+                    { _id: '$items.productId' },
                     '$items.product'
                   ]
                 },
@@ -247,6 +256,7 @@ const getOrderById = async (id, userId) => {
               }
             },
             shippingInfo: { $first: '$shippingInfo' },
+            shippingFee: { $first: '$shippingFee' },
             paymentMethod: { $first: '$paymentMethod' },
             total: { $first: '$total' },
             status: { $first: '$status' },
@@ -265,23 +275,59 @@ const getOrderById = async (id, userId) => {
 
 const cancelOrder = async (id, userId) => {
   try {
-    const updatedOrder = await GET_DB()
-      .collection(ORDER_COLLECTION_NAME)
-      .findOneAndUpdate(
-        {
-          _id: new ObjectId(id),
-          userId: new ObjectId(userId),
-          status: { $in: ['Đang chờ xử lý', 'Đang xử lý'] }
-        },
-        { $set: { status: 'Đã hủy', updatedAt: Date.now() } },
-        { returnDocument: 'after' }
-      )
+    const db = GET_DB()
+    const session = db.client.startSession()
 
-    if (!updatedOrder) {
-      throw new Error('Không tìm thấy đơn hàng hoặc đơn hàng không thể hủy')
+    try {
+      let updatedOrder
+      await session.withTransaction(async () => {
+        const order = await db.collection(ORDER_COLLECTION_NAME).findOne(
+          {
+            _id: new ObjectId(id),
+            userId: new ObjectId(userId),
+            status: { $in: ['Đang chờ xử lý', 'Đang xử lý'] }
+          },
+          { session }
+        )
+
+        if (!order) {
+          throw new Error('Không tìm thấy đơn hàng hoặc đơn hàng không thể hủy')
+        }
+
+        for (const item of order.items) {
+          const product = await db.collection(PRODUCT_COLLECTION_NAME).findOne(
+            { _id: new ObjectId(item.productId) },
+            { session }
+          )
+          if (!product) {
+            throw new Error(`Sản phẩm ${item.productId} không tồn tại`)
+          }
+          await db.collection(PRODUCT_COLLECTION_NAME).updateOne(
+            { _id: new ObjectId(item.productId) },
+            { $inc: { inventory: item.quantity } },
+            { session }
+          )
+        }
+
+        updatedOrder = await db.collection(ORDER_COLLECTION_NAME).findOneAndUpdate(
+          {
+            _id: new ObjectId(id),
+            userId: new ObjectId(userId),
+            status: { $in: ['Đang chờ xử lý', 'Đang xử lý'] }
+          },
+          { $set: { status: 'Đã hủy', updatedAt: Date.now() } },
+          { returnDocument: 'after', session }
+        )
+
+        if (!updatedOrder) {
+          throw new Error('Không tìm thấy đơn hàng hoặc đơn hàng không thể hủy')
+        }
+      })
+
+      return updatedOrder
+    } finally {
+      await session.endSession()
     }
-
-    return updatedOrder
   } catch (error) {
     throw error
   }
@@ -326,7 +372,6 @@ const receiveOrder = async (id, userId) => {
     throw error
   }
 }
-
 
 export const orderModel = {
   ORDER_COLLECTION_NAME,

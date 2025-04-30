@@ -10,7 +10,8 @@ const createNew = async (req, res, next) => {
       'string.min': 'Tên danh mục phải dài ít nhất 3 ký tự!',
       'string.max': 'Tên danh mục không được vượt quá 50 ký tự!'
     }),
-    description: Joi.string().optional().allow('')
+    description: Joi.string().optional().allow(''),
+    img: Joi.string().optional().allow('').trim().strict()
   })
 
   try {
@@ -30,7 +31,8 @@ const update = async (req, res, next) => {
       'string.min': 'Tên danh mục phải dài ít nhất 3 ký tự!',
       'string.max': 'Tên danh mục không được vượt quá 50 ký tự!'
     }),
-    description: Joi.string().optional().allow('')
+    description: Joi.string().optional().allow(''),
+    img: Joi.string().optional().allow('').trim().strict()
   }).min(1)
 
   try {

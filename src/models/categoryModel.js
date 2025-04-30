@@ -8,6 +8,7 @@ const CATEGORY_COLLECTION_NAME = 'categories'
 const CATEGORY_COLLECTION_SCHEMA = Joi.object({
   categoryName: Joi.string().required().min(2).max(50).trim().strict(),
   description: Joi.string().optional().allow(''),
+  img: Joi.string().optional().allow('').trim().strict(),
 
   createAt: Joi.date().timestamp('javascript').default(Date.now),
   updateAt: Joi.date().timestamp('javascript').default(null),

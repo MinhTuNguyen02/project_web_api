@@ -9,5 +9,8 @@ export const env = {
 
   BUILD_MODE: process.env.BUILD_MODE,
 
-  AUTHOR: process.env.AUTHOR
+  AUTHOR: process.env.AUTHOR,
+
+  CITIES: JSON.parse(process.env.CITIES),
+  SHIPPING_RATES: JSON.parse(process.env.SHIPPING_RATES)
 }

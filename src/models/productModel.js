@@ -12,6 +12,7 @@ const PRODUCT_COLLECTION_SCHEMA = Joi.object({
   price: Joi.number().required().min(0),
   img: Joi.array().items(Joi.string()).default([]),
   inventory: Joi.number().min(0).default(0),
+  purchaseCount: Joi.number().min(0).default(0),
 
   createAt: Joi.date().timestamp('javascript').default(Date.now),
   updateAt: Joi.date().timestamp('javascript').default(null),
@@ -48,12 +49,31 @@ const findOneById = async (id) => {
   }
 }
 
-const getAll = async (categoryId, name) => {
+const getAll = async (categoryId, name, sort, limit) => {
   try {
     const query = { _destroy: false }
     if (categoryId) query.categoryId = new ObjectId(categoryId)
-    if (name) query.productName = { $regex: name, $options: 'i' } // Tìm kiếm case-insensitive
-    const products = await GET_DB().collection(PRODUCT_COLLECTION_NAME).find(query).toArray()
+    if (name) query.productName = { $regex: name, $options: 'i' }
+
+    let queryBuilder = GET_DB().collection(PRODUCT_COLLECTION_NAME).find(query)
+
+    // Áp dụng sort
+    if (sort) {
+      const sortFields = {}
+      sort.split(',').forEach(field => {
+        const prefix = field.startsWith('-') ? -1 : 1
+        const fieldName = field.startsWith('-') ? field.slice(1) : field
+        sortFields[fieldName] = prefix
+      })
+      queryBuilder = queryBuilder.sort(sortFields)
+    }
+
+    // Áp dụng limit
+    if (limit) {
+      queryBuilder = queryBuilder.limit(parseInt(limit))
+    }
+
+    const products = await queryBuilder.toArray()
     return products
   } catch (error) {
     throw new Error(error)
