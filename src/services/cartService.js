@@ -56,7 +56,8 @@ const populateCartItems = async (cart) => {
           _id: item.productId,
           productName: product?.productName || 'Unknown',
           price: product?.price || 0,
-          img: product?.img || []
+          img: product?.img || [],
+          inventory: product?.inventory || 0
         },
         quantity: item.quantity
       }

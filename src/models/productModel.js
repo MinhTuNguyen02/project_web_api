@@ -7,7 +7,7 @@ import { ObjectId } from 'mongodb'
 const PRODUCT_COLLECTION_NAME = 'products'
 const PRODUCT_COLLECTION_SCHEMA = Joi.object({
   categoryId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
-  productName: Joi.string().required().min(3).max(100).trim().strict(),
+  productName: Joi.string().required().min(3).max(150).trim().strict(),
   description: Joi.string().optional().allow(''),
   price: Joi.number().required().min(0),
   img: Joi.array().items(Joi.string()).default([]),

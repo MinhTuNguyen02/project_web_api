@@ -57,12 +57,39 @@ const receiveOrder = async (id, userId) => {
   }
 }
 
+const getDailyStats = async (startDate, endDate) => {
+  try {
+    return await orderModel.getDailyStats(startDate, endDate)
+  } catch (error) {
+    throw error
+  }
+}
+
+const getMonthlyStats = async (year) => {
+  try {
+    return await orderModel.getMonthlyStats(year)
+  } catch (error) {
+    throw error
+  }
+}
+
+const getYearlyStats = async (startYear, endYear) => {
+  try {
+    return await orderModel.getYearlyStats(startYear, endYear)
+  } catch (error) {
+    throw error
+  }
+}
+
 export const orderService = {
   createOrder,
-  getOrderById,
-  getAllOrders,
   getOrdersByUserId,
+  getAllOrders,
+  getOrderById,
   cancelOrder,
   updateOrderStatus,
-  receiveOrder
+  receiveOrder,
+  getDailyStats,
+  getMonthlyStats,
+  getYearlyStats
 }

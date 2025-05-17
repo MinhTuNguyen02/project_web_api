@@ -23,4 +23,13 @@ Router.route('/:id/status')
 Router.route('/:id/receive')
   .put(authMiddleware.verifyToken, orderController.receiveOrder)
 
+Router.route('/stats/daily')
+  .get(authMiddleware.verifyToken, authMiddleware.isAdmin, orderController.getDailyStats)
+
+Router.route('/stats/monthly')
+  .get(authMiddleware.verifyToken, authMiddleware.isAdmin, orderController.getMonthlyStats)
+
+Router.route('/stats/yearly')
+  .get(authMiddleware.verifyToken, authMiddleware.isAdmin, orderController.getYearlyStats)
+
 export const orderRoute = Router

@@ -2,15 +2,17 @@
 import Joi from 'joi'
 import { GET_DB } from '~/config/mongodb'
 import { ObjectId } from 'mongodb'
+import { OBJECT_ID_RULE, OBJECT_ID_RULE_MESSAGE } from '~/utils/validators'
 
 const PRODUCT_COLLECTION_NAME = 'products'
 const ORDER_COLLECTION_NAME = 'orders'
+const PROMOTION_COLLECTION_NAME = 'promotions'
 const ORDER_COLLECTION_SCHEMA = Joi.object({
-  userId: Joi.string().required(),
+  userId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
   items: Joi.array()
     .items(
       Joi.object({
-        productId: Joi.string().required(),
+        productId: Joi.string().required().pattern(OBJECT_ID_RULE).message(OBJECT_ID_RULE_MESSAGE),
         quantity: Joi.number().min(1).required(),
         price: Joi.number().min(0).required()
       })
@@ -28,6 +30,10 @@ const ORDER_COLLECTION_SCHEMA = Joi.object({
   paymentMethod: Joi.string().valid('cod', 'bank').required(),
   shippingFee: Joi.number().min(0).required(),
   total: Joi.number().min(0).required(),
+  promotion: Joi.object({
+    code: Joi.string().min(3).max(20).uppercase().optional(),
+    discount: Joi.number().min(0).optional()
+  }).optional(),
   status: Joi.string().valid('Đang chờ xử lý', 'Đang xử lý', 'Đang giao hàng', 'Đã nhận hàng', 'Đã hủy').default('Đang chờ xử lý'),
   createdAt: Joi.date().timestamp('javascript').default(Date.now),
   updatedAt: Joi.date().timestamp('javascript').default(null)
@@ -74,6 +80,22 @@ const createOrder = async (data) => {
           )
         }
 
+        // Cập nhật usedCount của promotion nếu có
+        if (validData.promotion && validData.promotion.code) {
+          const promotion = await db.collection(PROMOTION_COLLECTION_NAME).findOne(
+            { code: validData.promotion.code.toUpperCase(), isActive: true, _destroy: false },
+            { session }
+          )
+          if (!promotion) {
+            throw new Error('Mã khuyến mãi không hợp lệ')
+          }
+          await db.collection(PROMOTION_COLLECTION_NAME).updateOne(
+            { code: validData.promotion.code.toUpperCase() },
+            { $inc: { usedCount: 1 }, $set: { updatedAt: new Date() } },
+            { session }
+          )
+        }
+
         // Chuẩn bị dữ liệu đơn hàng
         const newOrder = {
           ...validData,
@@ -98,6 +120,18 @@ const createOrder = async (data) => {
     }
   } catch (error) {
     throw new Error(error.message)
+  }
+}
+
+const countOrdersWithPromotion = async (userId, code) => {
+  try {
+    const count = await GET_DB().collection(ORDER_COLLECTION_NAME).countDocuments({
+      userId: new ObjectId(userId),
+      'promotion.code': code.toUpperCase()
+    })
+    return count
+  } catch (error) {
+    throw new Error(error)
   }
 }
 
@@ -143,6 +177,7 @@ const getOrdersByUserId = async (userId) => {
             shippingFee: { $first: '$shippingFee' },
             paymentMethod: { $first: '$paymentMethod' },
             total: { $first: '$total' },
+            promotion: { $first: '$promotion' },
             status: { $first: '$status' },
             createdAt: { $first: '$createdAt' },
             updatedAt: { $first: '$updatedAt' }
@@ -197,6 +232,7 @@ const getAllOrders = async () => {
             shippingFee: { $first: '$shippingFee' },
             paymentMethod: { $first: '$paymentMethod' },
             total: { $first: '$total' },
+            promotion: { $first: '$promotion' },
             status: { $first: '$status' },
             createdAt: { $first: '$createdAt' },
             updatedAt: { $first: '$updatedAt' }
@@ -259,6 +295,7 @@ const getOrderById = async (id, userId) => {
             shippingFee: { $first: '$shippingFee' },
             paymentMethod: { $first: '$paymentMethod' },
             total: { $first: '$total' },
+            promotion: { $first: '$promotion' },
             status: { $first: '$status' },
             createdAt: { $first: '$createdAt' },
             updatedAt: { $first: '$updatedAt' }
@@ -315,7 +352,7 @@ const cancelOrder = async (id, userId) => {
             userId: new ObjectId(userId),
             status: { $in: ['Đang chờ xử lý', 'Đang xử lý'] }
           },
-          { $set: { status: 'Đã hủy', updatedAt: Date.now() } },
+          { $set: { status: 'Đã hủy', updatedAt: new Date() } },
           { returnDocument: 'after', session }
         )
 
@@ -339,7 +376,7 @@ const updateOrderStatus = async (id, status) => {
       .collection(ORDER_COLLECTION_NAME)
       .findOneAndUpdate(
         { _id: new ObjectId(id) },
-        { $set: { status, updatedAt: Date.now() } },
+        { $set: { status, updatedAt: new Date() } },
         { returnDocument: 'after' }
       )
     if (!updatedOrder) {
@@ -361,7 +398,7 @@ const receiveOrder = async (id, userId) => {
           userId: new ObjectId(userId),
           status: 'Đang giao hàng'
         },
-        { $set: { status: 'Đã nhận hàng', updatedAt: Date.now() } },
+        { $set: { status: 'Đã nhận hàng', updatedAt: new Date() } },
         { returnDocument: 'after' }
       )
     if (!updatedOrder) {
@@ -370,6 +407,136 @@ const receiveOrder = async (id, userId) => {
     return updatedOrder
   } catch (error) {
     throw error
+  }
+}
+
+const getDailyStats = async (startDate, endDate) => {
+  try {
+    const start = new Date(startDate).getTime()
+    const end = new Date(endDate).getTime() + 86399999
+
+    return await GET_DB()
+      .collection(ORDER_COLLECTION_NAME)
+      .aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lte: end },
+            status: { $ne: 'Đã hủy' }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: { $toDate: '$createdAt' } }
+
+            },
+            totalRevenue: { $sum: '$total' },
+            orderCount: { $sum: 1 },
+            itemCount: { $sum: { $sum: '$items.quantity' } }
+          }
+        },
+        {
+          $sort: { _id: 1 }
+        },
+        {
+          $project: {
+            date: '$_id',
+            totalRevenue: 1,
+            orderCount: 1,
+            itemCount: 1,
+            _id: 0
+          }
+        }
+      ])
+      .toArray()
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const getMonthlyStats = async (year) => {
+  try {
+    const start = new Date(`${year}-01-01`).getTime()
+    const end = new Date(`${year}-12-31`).getTime() + 86399999
+
+    return await GET_DB()
+      .collection(ORDER_COLLECTION_NAME)
+      .aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lte: end },
+            status: { $ne: 'Đã hủy' }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: { $toDate: '$createdAt' } }
+            },
+            totalRevenue: { $sum: '$total' },
+            orderCount: { $sum: 1 },
+            itemCount: { $sum: { $sum: '$items.quantity' } }
+          }
+        },
+        {
+          $sort: { _id: 1 }
+        },
+        {
+          $project: {
+            month: '$_id',
+            totalRevenue: 1,
+            orderCount: 1,
+            itemCount: 1,
+            _id: 0
+          }
+        }
+      ])
+      .toArray()
+  } catch (error) {
+    throw new Error(error)
+  }
+}
+
+const getYearlyStats = async (startYear, endYear) => {
+  try {
+    const start = new Date(`${startYear}-01-01`).getTime()
+    const end = new Date(`${endYear}-12-31`).getTime() + 86399999
+
+    return await GET_DB()
+      .collection(ORDER_COLLECTION_NAME)
+      .aggregate([
+        {
+          $match: {
+            createdAt: { $gte: start, $lte: end },
+            status: { $ne: 'Đã hủy' }
+          }
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: '%Y-%m-%d', date: { $toDate: '$createdAt' } }
+            },
+            totalRevenue: { $sum: '$total' },
+            orderCount: { $sum: 1 },
+            itemCount: { $sum: { $sum: '$items.quantity' } }
+          }
+        },
+        {
+          $sort: { _id: 1 }
+        },
+        {
+          $project: {
+            year: '$_id',
+            totalRevenue: 1,
+            orderCount: 1,
+            itemCount: 1,
+            _id: 0
+          }
+        }
+      ])
+      .toArray()
+  } catch (error) {
+    throw new Error(error)
   }
 }
 
@@ -382,5 +549,9 @@ export const orderModel = {
   getOrderById,
   cancelOrder,
   updateOrderStatus,
-  receiveOrder
+  receiveOrder,
+  countOrdersWithPromotion,
+  getDailyStats,
+  getMonthlyStats,
+  getYearlyStats
 }

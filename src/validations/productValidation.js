@@ -11,11 +11,11 @@ const createNew = async (req, res, next) => {
       'string.min': 'Tên danh mục phải dài ít nhất 3 ký tự!',
       'string.max': 'Tên danh mục không được vượt quá 50 ký tự!'
     }, OBJECT_ID_RULE_MESSAGE),
-    productName: Joi.string().required().min(3).max(100).trim().strict().messages({
+    productName: Joi.string().required().min(3).max(150).trim().strict().messages({
       'any.required': 'Tên sản phẩm là bắt buộc',
       'string.empty': 'Tên sản phẩm không được để trống!',
       'string.min': 'Tên sản phẩm phải dài ít nhất 3 ký tự!',
-      'string.max': 'Tên sản phẩm không được vượt quá 50 ký tự!'
+      'string.max': 'Tên sản phẩm không được vượt quá 150 ký tự!'
     }),
     description: Joi.string().optional().allow(''),
     price: Joi.number().required().min(0).message({
@@ -46,11 +46,11 @@ const update = async (req, res, next) => {
       'string.min': 'Tên danh mục phải dài ít nhất 3 ký tự!',
       'string.max': 'Tên danh mục không được vượt quá 50 ký tự!'
     }, OBJECT_ID_RULE_MESSAGE),
-    productName: Joi.string().required().min(3).max(100).trim().strict().messages({
+    productName: Joi.string().required().min(3).max(150).trim().strict().messages({
       'any.required': 'Tên sản phẩm là bắt buộc',
       'string.empty': 'Tên sản phẩm không được để trống!',
       'string.min': 'Tên sản phẩm phải dài ít nhất 3 ký tự!',
-      'string.max': 'Tên sản phẩm không được vượt quá 50 ký tự!'
+      'string.max': 'Tên sản phẩm không được vượt quá 150 ký tự!'
     }),
     description: Joi.string().optional().allow(''),
     price: Joi.number().required().min(0).message({
