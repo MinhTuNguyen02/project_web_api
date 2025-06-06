@@ -1,4 +1,4 @@
-import { wishlistService } from '~/services/wishlistService'
+import { wishlistService } from '~/services/wishListService'
 
 const getWishlist = async (req, res) => {
   try {

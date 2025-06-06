@@ -29,7 +29,6 @@ Router.route('/stats/daily')
 Router.route('/stats/monthly')
   .get(authMiddleware.verifyToken, authMiddleware.isAdmin, orderController.getMonthlyStats)
 
-Router.route('/stats/yearly')
-  .get(authMiddleware.verifyToken, authMiddleware.isAdmin, orderController.getYearlyStats)
-
+Router.route('/stats/top-products')
+  .get(authMiddleware.verifyToken, authMiddleware.isAdmin, orderController.getTopProducts)
 export const orderRoute = Router

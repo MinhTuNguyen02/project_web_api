@@ -5,7 +5,7 @@ import { env } from '~/config/environment'
 
 const createOrder = async (req, res) => {
   try {
-    const { userId, items, shippingInfo, paymentMethod, total, promotionCode } = req.body
+    const { userId, items, shippingInfo, paymentMethod, total, promotion } = req.body
 
     if (!userId || !items || !shippingInfo || !paymentMethod || !total) {
       return res.status(StatusCodes.BAD_REQUEST).json({
@@ -47,15 +47,15 @@ const createOrder = async (req, res) => {
 
     // Xác thực mã khuyến mãi
     let discount = 0
-    let appliedPromotion = null
-    if (promotionCode) {
-      const { promotion, discount: calculatedDiscount } = await promotionService.validatePromotion(
-        promotionCode,
+    let appliedPromotion = undefined
+    if (promotion?.code) {
+      const { promotion: promo, discount: calculatedDiscount } = await promotionService.validatePromotion(
+        promotion.code,
         userId,
         itemsTotal
       )
-      appliedPromotion = { code: promotion.code, discount: calculatedDiscount }
-      if (promotion.type === 'free_shipping') {
+      appliedPromotion = { code: promo.code, discount: calculatedDiscount }
+      if (promo.type === 'free_shipping') {
         shippingFee = 0
         discount = 0
       } else {
@@ -204,11 +204,11 @@ const getMonthlyStats = async (req, res, next) => {
   }
 }
 
-const getYearlyStats = async (req, res, next) => {
+const getTopProducts = async (req, res, next) => {
   try {
-    const { startYear, endYear } = req.query
-    const stats = await orderService.getYearlyStats(startYear, endYear)
-    res.status(StatusCodes.OK).json({ stats })
+    const { startDate, endDate, year, month } = req.query
+    const topProducts = await orderService.getTopProducts({ startDate, endDate, year, month })
+    res.status(StatusCodes.OK).json({ topProducts })
   } catch (error) {
     next(error)
   }
@@ -224,5 +224,5 @@ export const orderController = {
   receiveOrder,
   getDailyStats,
   getMonthlyStats,
-  getYearlyStats
+  getTopProducts
 }

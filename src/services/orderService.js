@@ -6,6 +6,7 @@ const createOrder = async (data) => {
     return await orderModel.createOrder(data)
   } catch (error) {
     throw error
+
   }
 }
 
@@ -73,9 +74,9 @@ const getMonthlyStats = async (year) => {
   }
 }
 
-const getYearlyStats = async (startYear, endYear) => {
+const getTopProducts = async ({ startDate, endDate, year, month }) => {
   try {
-    return await orderModel.getYearlyStats(startYear, endYear)
+    return await orderModel.getTopProducts({ startDate, endDate, year, month })
   } catch (error) {
     throw error
   }
@@ -91,5 +92,5 @@ export const orderService = {
   receiveOrder,
   getDailyStats,
   getMonthlyStats,
-  getYearlyStats
+  getTopProducts
 }

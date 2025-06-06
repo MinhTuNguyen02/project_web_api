@@ -21,7 +21,7 @@ export const CLOSE_DB = async () => {
 }
 
 export const GET_DB = () => {
-  if (!officeHubDatabaseInstance) throw new Error('Must connect database first!')
+  if (!officeHubDatabaseInstance) throw new Error('Phải kết nối với database!')
   return officeHubDatabaseInstance
 }
 

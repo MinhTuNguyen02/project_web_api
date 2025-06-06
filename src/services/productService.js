@@ -34,7 +34,7 @@ const getById = async (id) => {
   try {
     const product = await productModel.findOneById(id)
     if (!product) {
-      throw new Error('Product not found')
+      throw new Error('Không tìm thấy sản phẩm')
     }
     return product
   } catch (error) {
@@ -47,7 +47,7 @@ const update = async (productId, reqBody) => {
     const { quantity, ...rest } = reqBody
     const existingProduct = await productModel.findOneById(productId)
     if (!existingProduct) {
-      throw new Error('Product not found')
+      throw new Error('Không tìm thấy sản phẩm')
     }
     const newInventory = existingProduct.inventory + (quantity || 0) // Cộng quantity vào inventory
     const updateData = {

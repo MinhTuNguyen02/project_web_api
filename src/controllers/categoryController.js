@@ -23,7 +23,7 @@ const update = async (req, res, next) => {
     const updatedCategory = await categoryService.update(categoryId, req.body)
     res.status(StatusCodes.OK).json(updatedCategory)
   } catch (error) {
-    if (error.message === 'Category not found' || error.message === 'Invalid category ID') {
+    if (error.message === 'Không tìm thấy danh mục' || error.message === 'ID danh mục không hợp lệ') {
       return res.status(StatusCodes.NOT_FOUND).json({ message: error.message })
     }
     next(error)

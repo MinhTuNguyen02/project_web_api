@@ -428,7 +428,6 @@ const getDailyStats = async (startDate, endDate) => {
           $group: {
             _id: {
               $dateToString: { format: '%Y-%m-%d', date: { $toDate: '$createdAt' } }
-
             },
             totalRevenue: { $sum: '$total' },
             orderCount: { $sum: 1 },
@@ -471,7 +470,7 @@ const getMonthlyStats = async (year) => {
         {
           $group: {
             _id: {
-              $dateToString: { format: '%Y-%m-%d', date: { $toDate: '$createdAt' } }
+              $dateToString: { format: '%Y-%m', date: { $toDate: '$createdAt' } }
             },
             totalRevenue: { $sum: '$total' },
             orderCount: { $sum: 1 },
@@ -497,10 +496,23 @@ const getMonthlyStats = async (year) => {
   }
 }
 
-const getYearlyStats = async (startYear, endYear) => {
+const getTopProducts = async ({ startDate, endDate, year, month }) => {
   try {
-    const start = new Date(`${startYear}-01-01`).getTime()
-    const end = new Date(`${endYear}-12-31`).getTime() + 86399999
+    let start, end
+    if (year && month) {
+      // Monthly stats
+      start = new Date(`${year}-${month.padStart(2, '0')}-01`).getTime()
+      const lastDay = new Date(year, month, 0).getDate()
+      end = new Date(`${year}-${month.padStart(2, '0')}-${lastDay}`).getTime() + 86399999
+    } else if (year) {
+      // Yearly stats
+      start = new Date(`${year}-01-01`).getTime()
+      end = new Date(`${year}-12-31`).getTime() + 86399999
+    } else {
+      // Daily stats
+      start = new Date(startDate).getTime()
+      end = new Date(endDate).getTime() + 86399999
+    }
 
     return await GET_DB()
       .collection(ORDER_COLLECTION_NAME)
@@ -511,28 +523,35 @@ const getYearlyStats = async (startYear, endYear) => {
             status: { $ne: 'Đã hủy' }
           }
         },
+        { $unwind: '$items' },
         {
           $group: {
-            _id: {
-              $dateToString: { format: '%Y-%m-%d', date: { $toDate: '$createdAt' } }
-            },
-            totalRevenue: { $sum: '$total' },
-            orderCount: { $sum: 1 },
-            itemCount: { $sum: { $sum: '$items.quantity' } }
+            _id: '$items.productId',
+            totalQuantity: { $sum: '$items.quantity' },
+            totalRevenue: { $sum: { $multiply: ['$items.quantity', '$items.price'] } }
           }
         },
         {
-          $sort: { _id: 1 }
+          $lookup: {
+            from: PRODUCT_COLLECTION_NAME,
+            localField: '_id',
+            foreignField: '_id',
+            as: 'product'
+          }
         },
+        { $unwind: '$product' },
         {
           $project: {
-            year: '$_id',
+            productId: '$_id',
+            productName: '$product.productName',
+            totalQuantity: 1,
             totalRevenue: 1,
-            orderCount: 1,
-            itemCount: 1,
+            img: '$product.img',
             _id: 0
           }
-        }
+        },
+        { $sort: { totalQuantity: -1 } },
+        { $limit: 5 }
       ])
       .toArray()
   } catch (error) {
@@ -553,5 +572,5 @@ export const orderModel = {
   countOrdersWithPromotion,
   getDailyStats,
   getMonthlyStats,
-  getYearlyStats
+  getTopProducts
 }

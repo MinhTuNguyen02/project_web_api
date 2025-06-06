@@ -6,7 +6,7 @@ const createNew = async (req, res, next) => {
   try {
     const createdMessage = await messageService.createNew(req.body)
     res.status(StatusCodes.CREATED).json({
-      message: 'Message sent successfully',
+      message: 'Gửi tin nhắn thành công',
       data: createdMessage
     })
   } catch (error) {
@@ -18,7 +18,7 @@ const getAll = async (req, res, next) => {
   try {
     const messages = await messageService.getAll()
     res.status(StatusCodes.OK).json({
-      message: 'Messages retrieved successfully',
+      message: 'Lấy danh sách tin nhắn thành công',
       data: messages
     })
   } catch (error) {

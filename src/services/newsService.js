@@ -27,7 +27,7 @@ const getById = async (newsId) => {
   try {
     const news = await newsModel.findOneById(newsId)
     if (!news) {
-      throw new Error('News not found')
+      throw new Error('Không tìm thấy tin')
     }
     return news
   } catch (error) {

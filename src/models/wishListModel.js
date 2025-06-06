@@ -77,7 +77,7 @@ const addProduct = async (userId, productId) => {
 const removeProduct = async (userId, productId) => {
   try {
     const wishlist = await findOneByUserId(userId)
-    if (!wishlist) throw new Error('Wishlist not found')
+    if (!wishlist) throw new Error('Không tìm thấy danh sách yêu thích')
 
     wishlist.products = wishlist.products.filter((id) => id.toString() !== productId)
 

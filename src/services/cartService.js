@@ -6,7 +6,7 @@ const addToCart = async ({ userId, productId, quantity }) => {
   try {
     const product = await productModel.findOneById(productId)
     if (!product) {
-      throw new Error('Product not found')
+      throw new Error('Không tìm thấy sản phẩm')
     }
     const cart = await cartModel.createOrUpdate(userId, { productId, quantity })
     const populatedCart = await populateCartItems(cart)

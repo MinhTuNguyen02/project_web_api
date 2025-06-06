@@ -41,17 +41,17 @@ const changePassword = async (req, res, next) => {
   try {
     const { email, oldPassword, newPassword } = req.body
     if (!email || !oldPassword || !newPassword) {
-      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Email, old password, and new password are required' })
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Email, mật khẩu cũ, và mật khẩu mới là bắt buộc' })
     }
     if (email !== req.user.email) {
-      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid email' })
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Email không hợp lệ' })
     }
     if (newPassword.length < 6) {
-      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'New password must be at least 6 characters' })
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Mật khẩu mới ít nhất phải có 6 ký tự' })
     }
 
     await userService.changePassword(req.user._id, oldPassword, newPassword)
-    res.status(StatusCodes.OK).json({ message: 'Password changed successfully' })
+    res.status(StatusCodes.OK).json({ message: 'Đổi mật khẩu thành công' })
   } catch (error) {
     next(error)
   }

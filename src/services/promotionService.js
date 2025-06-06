@@ -59,7 +59,7 @@ const createNew = async (data) => {
     }
     const createdPromotion = await promotionModel.createNew(data)
     if (!createdPromotion || !createdPromotion._id) {
-      throw new Error('Failed to create promotion: Invalid data returned')
+      throw new Error('Không thể tạo khuyến mãi: dữ liệu trả về không hợp lệ')
     }
     return createdPromotion
   } catch (error) {

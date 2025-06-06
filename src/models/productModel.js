@@ -104,7 +104,7 @@ const deleteItem = async (id) => {
       { returnDocument: 'after' }
     )
     if (!result) {
-      throw new Error('Product not found or already deleted')
+      throw new Error('.Không tìm thấy sản phẩm hoặc đã bị xóa')
     }
     return result
   } catch (error) {

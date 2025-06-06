@@ -35,7 +35,7 @@ const update = async (req, res, next) => {
     const updatedProduct = await productService.update(productId, req.body)
     res.status(StatusCodes.OK).json(updatedProduct)
   } catch (error) {
-    if (error.message === 'Product not found' || error.message === 'Invalid product ID') {
+    if (error.message === 'Không tìm thấy sản phẩm' || error.message === 'ID sản phẩm không hợp lệ') {
       return res.status(StatusCodes.NOT_FOUND).json({ message: error.message })
     }
     next(error)

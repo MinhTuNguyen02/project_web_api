@@ -58,12 +58,12 @@ const update = async (newsId, data) => {
       { returnDocument: 'after' }
     )
     if (!result) {
-      throw new Error('News not found')
+      throw new Error('Không tìm thấy tin')
     }
     return result
   } catch (error) {
     if (error.message.includes('ObjectId')) {
-      throw new Error('Invalid news ID')
+      throw new Error('ID tin không hợp lệ')
     }
     throw error
   }
@@ -77,7 +77,7 @@ const deleteItem = async (id) => {
       { returnDocument: 'after' }
     )
     if (!result) {
-      throw new Error('News not found or already deleted')
+      throw new Error('Không tìm thấy tin hoặc đã bị xóa')
     }
     return result
   } catch (error) {

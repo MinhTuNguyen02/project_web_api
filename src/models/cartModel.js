@@ -98,10 +98,10 @@ const createOrUpdate = async (userId, item) => {
 const updateQuantity = async (userId, productId, quantity) => {
   try {
     const cart = await findOneByUserId(userId)
-    if (!cart) throw new Error('Cart not found')
+    if (!cart) throw new Error('Không tìm thấy giỏ hàng')
 
     const item = cart.items.find((i) => i.productId.toString() === productId)
-    if (!item) throw new Error('Item not found')
+    if (!item) throw new Error('Không tìm thấy hàng')
 
     if (quantity <= 0) {
       cart.items = cart.items.filter((i) => i.productId.toString() !== productId)
@@ -125,7 +125,7 @@ const updateQuantity = async (userId, productId, quantity) => {
 const deleteItem = async (userId, productId) => {
   try {
     const cart = await findOneByUserId(userId)
-    if (!cart) throw new Error('Cart not found')
+    if (!cart) throw new Error('Không tìm thấy giỏ hàng')
 
     cart.items = cart.items.filter((i) => i.productId.toString() !== productId)
 

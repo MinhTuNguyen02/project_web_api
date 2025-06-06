@@ -72,7 +72,7 @@ const findAll = async () => {
   try {
     return await GET_DB()
       .collection(USER_COLLECTION_NAME)
-      .find()
+      .find({ role: 'user' })
       .toArray()
   } catch (error) {
     throw new Error(error)
