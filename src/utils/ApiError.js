@@ -1,6 +1,3 @@
-/**
- * Định nghĩa riêng một Class ApiError kế thừa class Error sẵn
- */
 class ApiError extends Error {
   constructor(statusCode, message) {
     // Thằng cha (Error) có property message rồi nên gọi nó luôn trong super
@@ -12,7 +9,7 @@ class ApiError extends Error {
     // Gán thêm http status code của ở đây
     this.statusCode = statusCode
 
-    // Ghi lại Stack Trace (dấu vết ngăn xếp) để thuận tiện cho việc debug
+    // Ghi lại Stack Trace để debug
     Error.captureStackTrace(this, this.constructor)
   }
 }

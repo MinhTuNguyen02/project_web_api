@@ -1,5 +1,5 @@
 import express from 'express'
-import { wishlistController } from '~/controllers/wishlistController'
+import { wishlistController } from '~/controllers/wishListController'
 import { authMiddleware } from '~/middlewares/authMiddleware'
 
 const router = express.Router()

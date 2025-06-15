@@ -120,7 +120,7 @@ const forgotPassword = async (email) => {
       }
     })
 
-    const resetUrl = `http://localhost:3000/reset-password?token=${resetToken}`
+    const resetUrl = `http://localhost:3000/pages/reset-password?token=${resetToken}`
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,

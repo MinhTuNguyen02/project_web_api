@@ -318,6 +318,7 @@ const cancelOrder = async (id, userId) => {
     try {
       let updatedOrder
       await session.withTransaction(async () => {
+        // Tìm đơn hàng
         const order = await db.collection(ORDER_COLLECTION_NAME).findOne(
           {
             _id: new ObjectId(id),
@@ -331,33 +332,49 @@ const cancelOrder = async (id, userId) => {
           throw new Error('Không tìm thấy đơn hàng hoặc đơn hàng không thể hủy')
         }
 
+        // Hoàn trả inventory và giảm purchaseCount cho từng sản phẩm
         for (const item of order.items) {
           const product = await db.collection(PRODUCT_COLLECTION_NAME).findOne(
-            { _id: new ObjectId(item.productId) },
+            { _id: new ObjectId(item.productId), _destroy: false },
             { session }
           )
           if (!product) {
-            throw new Error(`Sản phẩm ${item.productId} không tồn tại`)
+            throw new Error(`Sản phẩm với ID ${item.productId} không tồn tại`)
           }
-          await db.collection(PRODUCT_COLLECTION_NAME).updateOne(
-            { _id: new ObjectId(item.productId) },
-            { $inc: { inventory: item.quantity } },
+          const updateResult = await db.collection(PRODUCT_COLLECTION_NAME).updateOne(
+            { _id: new ObjectId(item.productId), _destroy: false },
+            {
+              $inc: {
+                inventory: item.quantity,
+                purchaseCount: -item.quantity
+              },
+              $set: { updatedAt: new Date() }
+            },
             { session }
           )
+          if (updateResult.matchedCount === 0) {
+            throw new Error(`Không thể cập nhật sản phẩm với ID ${item.productId}`)
+          }
         }
 
+        // Cập nhật trạng thái đơn hàng
         updatedOrder = await db.collection(ORDER_COLLECTION_NAME).findOneAndUpdate(
           {
             _id: new ObjectId(id),
             userId: new ObjectId(userId),
             status: { $in: ['Đang chờ xử lý', 'Đang xử lý'] }
           },
-          { $set: { status: 'Đã hủy', updatedAt: new Date() } },
+          {
+            $set: {
+              status: 'Đã hủy',
+              updatedAt: new Date()
+            }
+          },
           { returnDocument: 'after', session }
         )
 
         if (!updatedOrder) {
-          throw new Error('Không tìm thấy đơn hàng hoặc đơn hàng không thể hủy')
+          throw new Error('Không thể hủy đơn hàng do không tìm thấy hoặc trạng thái không hợp lệ')
         }
       })
 
@@ -366,7 +383,7 @@ const cancelOrder = async (id, userId) => {
       await session.endSession()
     }
   } catch (error) {
-    throw error
+    throw new Error(error.message)
   }
 }
 
