@@ -157,6 +157,19 @@ const resetPassword = async (token, password) => {
   }
 }
 
+const updateUserInfo = async (userId, data) => {
+  try {
+    const { fullName, phoneNumber } = data
+    const updatedUser = await userModel.update(userId, { fullName, phoneNumber })
+    if (!updatedUser) {
+      throw new Error('Không tìm thấy user để cập nhật')
+    }
+    return updatedUser
+  } catch (error) {
+    throw error
+  }
+}
+
 export const userService = {
   createNew,
   login,
@@ -164,5 +177,6 @@ export const userService = {
   getAllUsers,
   changePassword,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  updateUserInfo
 }

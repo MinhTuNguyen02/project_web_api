@@ -1,13 +1,15 @@
 import express from 'express'
 import { categoryValidation } from '~/validations/categoryValidation'
 import { categoryController } from '~/controllers/categoryController'
+import { authMiddleware } from '~/middlewares/authMiddleware'
+
 const Router = express.Router()
 
 Router.route('/')
   .get(categoryController.getAll)
-  .post(categoryValidation.createNew, categoryController.createNew)
+  .post(authMiddleware.isAdmin, categoryValidation.createNew, categoryController.createNew)
 
 Router.route('/:id')
-  .put(categoryValidation.update, categoryController.update)
+  .put(authMiddleware.isAdmin, categoryValidation.update, categoryController.update)
 
 export const categoryRoute = Router

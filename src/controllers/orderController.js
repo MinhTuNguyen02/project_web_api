@@ -1,7 +1,7 @@
 import { StatusCodes } from 'http-status-codes'
 import { orderService } from '~/services/orderService'
 import { promotionService } from '~/services/promotionService'
-import { env } from '~/config/environment'
+import { CITIES, SHIPPING_RATES } from '~/utils/constants'
 
 const createOrder = async (req, res) => {
   try {
@@ -19,27 +19,27 @@ const createOrder = async (req, res) => {
     const { shippingMethod = 'standard', address } = shippingInfo
 
     const getCityFromAddress = (address) => {
-      if (!env.CITIES || !Array.isArray(env.CITIES)) {
+      if (!CITIES || !Array.isArray(CITIES)) {
         return 'default'
       }
       if (!address || typeof address !== 'string') {
         return 'default'
       }
       const normalizedAddress = address.trim().toLowerCase()
-      return env.CITIES.find(city => normalizedAddress.includes(city.toLowerCase())) || 'default'
+      return CITIES.find(city => normalizedAddress.includes(city.toLowerCase())) || 'default'
     }
 
     const city = getCityFromAddress(address)
-    if (!env.SHIPPING_RATES || !env.SHIPPING_RATES[city]) {
+    if (!SHIPPING_RATES || !SHIPPING_RATES[city]) {
       return res.status(StatusCodes.BAD_REQUEST).json({
         message: 'Không tìm thấy phí vận chuyển cho khu vực này',
         statusCode: 400
       })
     }
-    const { baseFee, distance, rate } = env.SHIPPING_RATES[city]
+    const { baseFee, distance, rate } = SHIPPING_RATES[city]
     shippingFee = baseFee + distance * rate
     if (shippingMethod === 'express') {
-      shippingFee *= env.EXPRESS_MULTIPLIER || 1.5
+      shippingFee *= 1.5
     }
 
     // Tính tổng giá trị sản phẩm

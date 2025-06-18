@@ -86,6 +86,23 @@ const resetPassword = async (req, res, next) => {
   }
 }
 
+const updateUserInfo = async (req, res, next) => {
+  try {
+    const { fullName, phoneNumber } = req.body
+    if (!fullName || !phoneNumber) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Họ tên và số điện thoại là bắt buộc' })
+    }
+    if (!/^\d{10}$/.test(phoneNumber)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Số điện thoại phải là 10 chữ số' })
+    }
+
+    const updatedUser = await userService.updateUserInfo(req.user._id, { fullName, phoneNumber })
+    res.status(StatusCodes.OK).json({ user: updatedUser, message: 'Thông tin đã được cập nhật' })
+  } catch (error) {
+    next(error)
+  }
+}
+
 export const userController = {
   register,
   login,
@@ -93,5 +110,6 @@ export const userController = {
   getAllUsers,
   changePassword,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  updateUserInfo
 }

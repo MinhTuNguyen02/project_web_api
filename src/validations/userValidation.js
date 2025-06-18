@@ -4,7 +4,7 @@ import ApiError from '~/utils/ApiError'
 
 const createNew = async (req, res, next) => {
   const correctCondition = Joi.object({
-    email: Joi.string().email().required().trim().strict(),
+    email: Joi.string().email().pattern(/^[^\s@]+@[^\s@]+\.[^\s@]+$/).required().trim().strict(),
     password: Joi.string().required().min(6).trim().strict(),
     role: Joi.string().valid('user', 'admin').default('user'),
     fullName: Joi.string().optional().trim().strict(),
