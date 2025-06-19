@@ -438,7 +438,7 @@ const getDailyStats = async (startDate, endDate) => {
         {
           $match: {
             createdAt: { $gte: start, $lte: end },
-            status: { $ne: 'Đã hủy' }
+            status: 'Đã nhận hàng'
           }
         },
         {
@@ -481,7 +481,7 @@ const getMonthlyStats = async (year) => {
         {
           $match: {
             createdAt: { $gte: start, $lte: end },
-            status: { $ne: 'Đã hủy' }
+            status: 'Đã nhận hàng'
           }
         },
         {

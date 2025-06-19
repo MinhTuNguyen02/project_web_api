@@ -49,7 +49,8 @@ const update = async (productId, reqBody) => {
     if (!existingProduct) {
       throw new Error('Không tìm thấy sản phẩm')
     }
-    const newInventory = existingProduct.inventory + (quantity || 0) // Cộng quantity vào inventory
+    const newQuantity = quantity ? parseInt(quantity, 10) : 0
+    const newInventory = existingProduct.inventory + newQuantity // Cộng quantity vào inventory
     const updateData = {
       ...rest,
       inventory: newInventory,
